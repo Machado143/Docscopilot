@@ -33,7 +33,7 @@ async function loadState() {
 
 async function saveSettings() {
   const apiKey = elements.apiKey.value.trim();
-  const isActive = elements.isActive.checked;
+  const isActive = apiKey ? true : elements.isActive.checked;
 
   await chrome.storage.local.set({
     [STORAGE_KEYS.apiKey]: apiKey,
@@ -41,7 +41,14 @@ async function saveSettings() {
   });
 
   updateStatus(isActive);
-  showMessage(apiKey ? "Configurações salvas." : "Salvo sem chave de API.");
+  elements.isActive.checked = isActive;
+
+  if (!apiKey) {
+    showMessage("Salvo sem chave. Adicione uma chave Gemini para ativar.");
+    return;
+  }
+
+  showMessage("Chave salva e extensão ativada.");
 }
 
 function updateStatus(isActive) {
