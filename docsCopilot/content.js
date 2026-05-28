@@ -4,6 +4,8 @@ const STATE = {
 	lastContext: "",
 	lastSuggestion: "",
 	lastRequestId: 0,
+	overlayElement: null,
+	overlayType: null,
 };
 
 const DEBOUNCE_DELAY_MS = 650;
@@ -18,10 +20,12 @@ async function init() {
 	await loadSettings();
 	chrome.storage.onChanged.addListener(handleStorageChange);
 	document.addEventListener("keyup", handleKeyUp, true);
+	document.addEventListener("keydown", handleKeyDown, true);
 
 	window.__docsCopilotDebug = {
 		getLastContext: () => STATE.lastContext,
 		isActive: () => STATE.isActive,
+		getLastSuggestion: () => STATE.lastSuggestion,
 	};
 }
 
@@ -48,6 +52,7 @@ function handleKeyUp(event) {
 		const context = extractContext();
 
 		if (!context) {
+			removeOverlay();
 			return;
 		}
 
@@ -55,6 +60,30 @@ function handleKeyUp(event) {
 		console.log("[DocsCopilot] Contexto capturado:", context);
 		requestCompletion(context);
 	}, DEBOUNCE_DELAY_MS);
+}
+
+function handleKeyDown(event) {
+	if (!hasOverlay()) {
+		return;
+	}
+
+	if (event.key === "Tab") {
+		event.preventDefault();
+		acceptSuggestion();
+		return;
+	}
+
+	if (event.key === "Escape") {
+		event.preventDefault();
+		removeOverlay();
+		return;
+	}
+
+	if (!isRelevantKey(event)) {
+		return;
+	}
+
+	removeOverlay();
 }
 
 function isRelevantKey(event) {
@@ -67,7 +96,6 @@ function isRelevantKey(event) {
 		"Delete",
 		"Enter",
 		"Space",
-		"Tab",
 	]);
 
 	return event.key.length === 1 || textKeys.has(event.key);
@@ -120,6 +148,7 @@ function cleanText(text) {
 
 async function requestCompletion(context) {
 	const requestId = ++STATE.lastRequestId;
+	showLoadingIndicator();
 
 	try {
 		const response = await chrome.runtime.sendMessage({
@@ -134,18 +163,126 @@ async function requestCompletion(context) {
 		if (response?.suggestion) {
 			STATE.lastSuggestion = response.suggestion;
 			console.log("[DocsCopilot] Sugestão recebida:", response.suggestion);
+			showGhostText(response.suggestion);
 			return;
 		}
 
 		if (response?.error === "NO_API_KEY") {
+			removeOverlay();
 			console.warn("[DocsCopilot] Configure a chave da API no popup.");
 			return;
 		}
 
 		if (response?.error) {
+			removeOverlay();
 			console.warn("[DocsCopilot] Resposta sem sugestão:", response.error, response.message || "");
 		}
 	} catch (error) {
+		removeOverlay();
 		console.error("[DocsCopilot] Falha ao solicitar sugestão:", error);
 	}
+}
+
+function showLoadingIndicator() {
+	removeOverlay();
+	const loading = document.createElement("span");
+	loading.id = "docsCopilot-ghost";
+	loading.className = "docsCopilot-loading";
+	loading.textContent = "...";
+	positionOverlay(loading);
+	document.body.appendChild(loading);
+	STATE.overlayElement = loading;
+	STATE.overlayType = "loading";
+}
+
+function showGhostText(text) {
+	const suggestion = cleanText(String(text || ""));
+
+	if (!suggestion) {
+		removeOverlay();
+		return;
+	}
+
+	removeOverlay();
+	const ghost = document.createElement("span");
+	ghost.id = "docsCopilot-ghost";
+	ghost.className = "docsCopilot-ghost";
+	ghost.textContent = suggestion;
+	positionOverlay(ghost);
+	document.body.appendChild(ghost);
+	STATE.overlayElement = ghost;
+	STATE.overlayType = "ghost";
+}
+
+function positionOverlay(element) {
+	const rect = getCaretRect();
+	const left = Math.min(rect.right, window.innerWidth - 20);
+	const top = rect.bottom > window.innerHeight - 24 ? rect.bottom : rect.top;
+
+	element.style.left = `${Math.max(0, left)}px`;
+	element.style.top = `${Math.max(0, top)}px`;
+}
+
+function getCaretRect() {
+	const selection = window.getSelection();
+
+	if (!selection || selection.rangeCount === 0) {
+		return { left: 0, top: 0, right: 0, bottom: 0 };
+	}
+
+	const range = selection.getRangeAt(0).cloneRange();
+	range.collapse(true);
+	const rect = range.getBoundingClientRect();
+
+	if (rect && (rect.width || rect.height)) {
+		return rect;
+	}
+
+	const nodeRect = selection.anchorNode?.parentElement?.getBoundingClientRect?.();
+	if (nodeRect) {
+		return nodeRect;
+	}
+
+	return { left: 0, top: 0, right: 0, bottom: 0 };
+}
+
+function acceptSuggestion() {
+	if (!STATE.overlayElement || STATE.overlayType !== "ghost") {
+		return;
+	}
+
+	const text = STATE.overlayElement.textContent || "";
+	removeOverlay();
+	insertTextAtCursor(text);
+}
+
+function insertTextAtCursor(text) {
+	if (document.execCommand("insertText", false, text)) {
+		return;
+	}
+
+	const selection = window.getSelection();
+	if (!selection || selection.rangeCount === 0) {
+		return;
+	}
+
+	const range = selection.getRangeAt(0);
+	range.deleteContents();
+	range.insertNode(document.createTextNode(text));
+	range.collapse(false);
+	selection.removeAllRanges();
+	selection.addRange(range);
+}
+
+function removeOverlay() {
+	if (STATE.overlayElement?.parentNode) {
+		STATE.overlayElement.parentNode.removeChild(STATE.overlayElement);
+	}
+
+	STATE.overlayElement = null;
+	STATE.overlayType = null;
+}
+
+function hasOverlay() {
+	return Boolean(STATE.overlayElement);
 }

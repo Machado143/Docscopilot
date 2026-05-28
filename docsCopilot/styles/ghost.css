@@ -1,0 +1,21 @@
+#docsCopilot-ghost,
+.docsCopilot-ghost,
+.docsCopilot-loading {
+	position: fixed;
+	z-index: 9999;
+	pointer-events: none;
+	user-select: none;
+	font-family: Arial, sans-serif;
+	font-size: 11pt;
+	line-height: 1.5;
+	white-space: pre;
+	color: #9aa0a6;
+	opacity: 0.92;
+	padding: 0;
+	margin: 0;
+	transform: translateZ(0);
+}
+
+.docsCopilot-loading {
+	letter-spacing: 0.1em;
+}
