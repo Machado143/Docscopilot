@@ -1,5 +1,5 @@
-const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
-const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message?.type !== "GET_COMPLETION") {
@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		.catch((error) => {
 			sendResponse({
 				error: "API_ERROR",
-				message: error?.message || "Erro inesperado ao consultar a Anthropic.",
+				message: error?.message || "Erro inesperado ao consultar o Gemini.",
 			});
 		});
 
@@ -40,35 +40,35 @@ async function handleCompletionRequest(context) {
 		String(context).trim(),
 	].join("\n");
 
-	const response = await fetch(ANTHROPIC_ENDPOINT, {
+	const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			"x-api-key": apiKey,
-			"anthropic-version": "2023-06-01",
 		},
 		body: JSON.stringify({
-			model: ANTHROPIC_MODEL,
-			max_tokens: 80,
-			messages: [
+			contents: [
 				{
 					role: "user",
-					content: prompt,
+					parts: [{ text: prompt }],
 				},
 			],
+			generationConfig: {
+				maxOutputTokens: 80,
+				temperature: 0.4,
+			},
 		}),
 	});
 
 	if (!response.ok) {
 		if (response.status === 429) {
-			return { error: "RATE_LIMIT", message: "Anthropic respondeu com rate limit." };
+			return { error: "RATE_LIMIT", message: "Gemini respondeu com rate limit." };
 		}
 
-		throw new Error(`Anthropic respondeu com status ${response.status}`);
+		throw new Error(`Gemini respondeu com status ${response.status}`);
 	}
 
 	const data = await response.json();
-	const suggestion = data?.content?.[0]?.text?.trim() || "";
+	const suggestion = data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("").trim() || "";
 
 	if (!suggestion) {
 		return { error: "EMPTY_SUGGESTION" };
