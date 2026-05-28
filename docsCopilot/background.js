@@ -60,6 +60,10 @@ async function handleCompletionRequest(context) {
 	});
 
 	if (!response.ok) {
+		if (response.status === 429) {
+			return { error: "RATE_LIMIT", message: "Anthropic respondeu com rate limit." };
+		}
+
 		throw new Error(`Anthropic respondeu com status ${response.status}`);
 	}
 

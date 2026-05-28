@@ -6,6 +6,7 @@ const STATE = {
 	lastRequestId: 0,
 	overlayElement: null,
 	overlayType: null,
+	cooldownUntil: 0,
 };
 
 const DEBOUNCE_DELAY_MS = 650;
@@ -59,7 +60,7 @@ function handleKeyUp(event) {
 		STATE.lastContext = context;
 		console.log("[DocsCopilot] Contexto capturado:", context);
 		requestCompletion(context);
-	}, DEBOUNCE_DELAY_MS);
+	}, getDebounceDelayMs());
 }
 
 function handleKeyDown(event) {
@@ -160,6 +161,12 @@ async function requestCompletion(context) {
 			return;
 		}
 
+		const currentContext = extractContext();
+		if (!currentContext || cleanText(currentContext) !== cleanText(context)) {
+			removeOverlay();
+			return;
+		}
+
 		if (response?.suggestion) {
 			STATE.lastSuggestion = response.suggestion;
 			console.log("[DocsCopilot] Sugestão recebida:", response.suggestion);
@@ -173,6 +180,13 @@ async function requestCompletion(context) {
 			return;
 		}
 
+		if (response?.error === "RATE_LIMIT") {
+			STATE.cooldownUntil = Date.now() + 2000;
+			removeOverlay();
+			console.warn("[DocsCopilot] Rate limit da API. Aplicando cooldown temporário.");
+			return;
+		}
+
 		if (response?.error) {
 			removeOverlay();
 			console.warn("[DocsCopilot] Resposta sem sugestão:", response.error, response.message || "");
@@ -181,6 +195,10 @@ async function requestCompletion(context) {
 		removeOverlay();
 		console.error("[DocsCopilot] Falha ao solicitar sugestão:", error);
 	}
+}
+
+function getDebounceDelayMs() {
+	return Date.now() < STATE.cooldownUntil ? 2000 : DEBOUNCE_DELAY_MS;
 }
 
 function showLoadingIndicator() {
