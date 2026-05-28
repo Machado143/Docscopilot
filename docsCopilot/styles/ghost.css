@@ -19,3 +19,143 @@
 .docsCopilot-loading {
 	letter-spacing: 0.1em;
 }
+#docsCopilot-panel {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	z-index: 999999;
+	width: 340px;
+	max-width: calc(100vw - 24px);
+	height: calc(100vh - 32px);
+	background: linear-gradient(180deg, rgba(16, 18, 24, 0.98), rgba(24, 27, 35, 0.98));
+	color: #f3f4f6;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 18px;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+	overflow: hidden;
+	font-family: Inter, "Segoe UI", Arial, sans-serif;
+	display: flex;
+	flex-direction: column;
+	backdrop-filter: blur(16px);
+}
+
+#docsCopilot-panel * {
+	box-sizing: border-box;
+}
+
+.docsCopilot-hidden {
+	display: none !important;
+}
+
+.docsCopilot-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 14px 12px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.docsCopilot-panel__title {
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.docsCopilot-panel__status {
+	font-size: 12px;
+	color: #9ca3af;
+	margin-top: 3px;
+}
+
+.docsCopilot-panel__close {
+	border: 0;
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+	width: 30px;
+	height: 30px;
+	border-radius: 10px;
+	cursor: pointer;
+}
+
+.docsCopilot-panel__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px 14px 14px;
+	min-height: 0;
+	flex: 1;
+}
+
+.docsCopilot-panel__section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.docsCopilot-panel__label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #cbd5e1;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.docsCopilot-panel__input,
+.docsCopilot-panel__output {
+	width: 100%;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.04);
+	color: #f8fafc;
+	font: inherit;
+	padding: 12px;
+	outline: none;
+}
+
+.docsCopilot-panel__input {
+	min-height: 84px;
+	resize: vertical;
+	line-height: 1.4;
+}
+
+.docsCopilot-panel__output {
+	min-height: 180px;
+	white-space: pre-wrap;
+	overflow: auto;
+	line-height: 1.55;
+	flex: 1;
+}
+
+.docsCopilot-panel__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.docsCopilot-panel__button {
+	border: 0;
+	border-radius: 12px;
+	padding: 10px 12px;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+	background: linear-gradient(135deg, #3b82f6, #2563eb);
+	color: white;
+}
+
+.docsCopilot-panel__button--secondary {
+	background: rgba(255, 255, 255, 0.08);
+	color: #e5e7eb;
+}
+
+.docsCopilot-panel__meta {
+	font-size: 12px;
+	color: #94a3b8;
+	line-height: 1.4;
+}
+
+.docsCopilot-panel__loading {
+	color: #cbd5e1;
+	font-style: italic;
+}
