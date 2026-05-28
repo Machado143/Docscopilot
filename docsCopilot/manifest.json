@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "DocsCopilot",
+  "version": "1.0.0",
+  "description": "Autocomplete com IA para Google Docs.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://docs.google.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "DocsCopilot"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/document/*"],
+      "js": ["content.js"],
+      "css": ["styles/ghost.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

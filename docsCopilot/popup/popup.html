@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocsCopilot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="hero">
+        <p class="eyebrow">Chrome Extension</p>
+        <h1>DocsCopilot</h1>
+        <p class="subtitle">Autocomplete com IA para Google Docs.</p>
+      </header>
+
+      <section class="card">
+        <label class="toggle-row" for="isActive">
+          <span>
+            <strong>Extensão ativa</strong>
+            <small id="statusLabel">Carregando...</small>
+          </span>
+          <input id="isActive" type="checkbox" />
+        </label>
+
+        <label class="field" for="apiKey">
+          <span>Chave da API Anthropic</span>
+          <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        </label>
+
+        <button id="saveButton" type="button">Salvar</button>
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>
+
+      <footer class="footer">
+        <a href="https://console.anthropic.com" target="_blank" rel="noreferrer">Obter API Key</a>
+      </footer>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
