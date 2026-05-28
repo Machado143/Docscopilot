@@ -2,6 +2,8 @@ const STATE = {
 	isActive: false,
 	debounceTimer: null,
 	lastContext: "",
+	lastSuggestion: "",
+	lastRequestId: 0,
 };
 
 const DEBOUNCE_DELAY_MS = 650;
@@ -51,6 +53,7 @@ function handleKeyUp(event) {
 
 		STATE.lastContext = context;
 		console.log("[DocsCopilot] Contexto capturado:", context);
+		requestCompletion(context);
 	}, DEBOUNCE_DELAY_MS);
 }
 
@@ -113,4 +116,36 @@ function isVisibleElement(element) {
 
 function cleanText(text) {
 	return text.replace(/\s+/g, " ").trim();
+}
+
+async function requestCompletion(context) {
+	const requestId = ++STATE.lastRequestId;
+
+	try {
+		const response = await chrome.runtime.sendMessage({
+			type: "GET_COMPLETION",
+			context,
+		});
+
+		if (requestId !== STATE.lastRequestId) {
+			return;
+		}
+
+		if (response?.suggestion) {
+			STATE.lastSuggestion = response.suggestion;
+			console.log("[DocsCopilot] Sugestão recebida:", response.suggestion);
+			return;
+		}
+
+		if (response?.error === "NO_API_KEY") {
+			console.warn("[DocsCopilot] Configure a chave da API no popup.");
+			return;
+		}
+
+		if (response?.error) {
+			console.warn("[DocsCopilot] Resposta sem sugestão:", response.error, response.message || "");
+		}
+	} catch (error) {
+		console.error("[DocsCopilot] Falha ao solicitar sugestão:", error);
+	}
 }
